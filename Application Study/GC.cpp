@@ -481,8 +481,13 @@ arma::mat NPGC(arma::mat Y, arma::mat Ylag, arma::mat Z, arma::mat X, int Type, 
   double Lambda = 0;
   arma::ivec VarKey = arma::join_cols(arma::zeros<arma::ivec>(1), arma::join_cols(1 * arma::ones<arma::ivec>(SYlag.n_cols), arma::join_cols(2 * arma::ones<arma::ivec>(SZ.n_cols), 3 * arma::ones<arma::ivec>(SX.n_cols))));
   arma::ivec PenaltyKey = arma::zeros<arma::ivec>(1 + SYlag.n_cols + SZ.n_cols + SX.n_cols);
-  arma::uvec FoldKey = arma::shuffle(arma::floor(K * arma::regspace<arma::uvec>(0, L - 1) / L));
+  arma::uvec FoldKey;
   arma::imat Folds = arma::zeros<arma::imat>(L * Omega, K);
+  if(K == L) {
+    FoldKey = arma::shuffle(arma::regspace<arma::uvec>(0, L - 1));
+  } else {
+    FoldKey = arma::shuffle(arma::floor(K * arma::regspace<arma::uvec>(0, L - 1) / L));
+  }
   for(int k = 0; k < K; k++) {
     arma::uvec Key = arma::shuffle(arma::find(FoldKey != k));
     int NKey = Key.n_rows;
