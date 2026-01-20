@@ -33,16 +33,24 @@ zero_eval <- function(zero_result, prop = 0.5) {
   return(Output)
 }
 
-lasso_eval <- function(lasso_result, prop = 0.5, unique = FALSE) {
+lasso_eval <- function(lasso_result, prop = 0.5) {
   # Return >= prop, Granger Causal
   Output <- vector("list", length = 4)
   Output[[1]] <- mean(colSums(lasso_result$W0) != 0)
   Output[[2]] <- (Output[[1]][1] >= prop)
   Output[[3]] <- prop
   Output[[4]] <- lasso_result$Lambdas
-  if(unique) {
-    Output[[4]] <- unique(Output[[4]])
-  }
+  names(Output) <- c("Votes", "Decision", "Level", "Lambda")
+  return(Output)
+}
+
+oracle_lasso_eval <- function(lasso_result, prop = 0.5) {
+  # Return >= prop, Granger Causal
+  Output <- vector("list", length = 4)
+  Output[[1]] <- apply(lasso_result$W0, 3, function(zzz) mean(colSums(zzz) != 0))
+  Output[[2]] <- (Output[[1]][1] >= prop)
+  Output[[3]] <- prop
+  Output[[4]] <- lasso_result$Lambdas
   names(Output) <- c("Votes", "Decision", "Level", "Lambda")
   return(Output)
 }
@@ -168,7 +176,7 @@ produce_tableV1 <- function() {
     mutate(NPGC05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
     mutate(NPGC10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
     mutate(GAUSS = sapply(rows, function(zz) {mean(unlist(lapply(GAUSS100[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {gauss_eval(xx, alpha = 0.10)$Decision})))})) %>% 
-    mutate(ZERO = sapply(rows, function(zz) {mean(unlist(lapply(ZERO100[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {zero_eval(xx)$Decision})))})) %>%
+    mutate(ZERO = sapply(rows, function(zz) {mean(unlist(lapply(ZERO100[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {zero_eval(xx, prop = 0.5)$Decision})))})) %>%
     mutate(LASSO1MV = sapply(rows, function(zz) {mean(unlist(lapply(LASSO1[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {lasso_eval(xx, prop = 0.5)$Decision})))})) %>% 
     mutate(LASSO1ONE = sapply(rows, function(zz) {mean(unlist(lapply(LASSO1[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {lasso_eval(xx, prop = 0.001)$Decision})))})) %>% 
     mutate(LASSO2MV = sapply(rows, function(zz) {mean(unlist(lapply(LASSO2[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {lasso_eval(xx, prop = 0.5)$Decision})))})) %>% 
@@ -208,9 +216,11 @@ produce_tableV3 <- function(alpha) {
     mutate(N25_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_1[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
     mutate(N50_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_10[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
     mutate(N100_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
+    mutate(N200_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGCn200[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
     mutate(N25_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_1[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
     mutate(N50_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_10[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
-    mutate(N100_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))}))
+    mutate(N100_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
+    mutate(N200_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGCn200[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))}))
 }
 
 produce_tableV4 <- function(alpha) {
@@ -247,4 +257,19 @@ produce_tableV6 <- function(alpha) {
     mutate(MLP_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC2[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))}))
 }
 
+produce_tableV7 <- function(alpha) {
+  rows <- 1:12
+  tablefull <- tibble(Length = rep(c(250, 500, 1000), each = 4), Model = rep(rep(c("VAR", "TAR"), each = 2), 3), Decision = rep(c("GC", "NC"), 6)) 
+  tablefull <- tablefull %>% 
+    mutate(K05_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC5[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
+    mutate(K10_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
+    mutate(K20_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC20[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
+    mutate(K40_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC40[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
+    mutate(K80_05 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC80[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.05)$Decision})))})) %>%
+    mutate(K05_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC5[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
+    mutate(K10_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC_19[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
+    mutate(K20_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC20[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
+    mutate(K40_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC40[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))})) %>%
+    mutate(K80_10 = sapply(rows, function(zz) {mean(unlist(lapply(NPGC80[which(str_detect(datakey$Model, tablefull$Model[zz]) & str_detect(datakey$GC, tablefull$Decision[zz]) & datakey$Length == tablefull$Length[zz])], function(xx) {npgc_eval(xx, alpha = 0.10)$Decision})))}))
+}
 
